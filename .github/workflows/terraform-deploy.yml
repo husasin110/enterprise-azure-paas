@@ -17,7 +17,7 @@ jobs:
   # STAGE 1: BUILD & PLAN
   # ==========================================
   build:
-    name: 'Stage 1: Build & Plan'
+    name: 'Stage 1: Build'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -31,7 +31,6 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      # Removed the strict "-check" flag so it formats the code without failing the pipeline
       - name: Terraform Format
         run: terraform fmt 
 
@@ -41,7 +40,6 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -out=tfplan
 
-      # Saves the plan file so the next stage can use it
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
@@ -54,7 +52,7 @@ jobs:
   deploy_infra:
     name: 'Stage 2: Deploy Infra'
     runs-on: ubuntu-latest
-    needs: build # This ensures Stage 2 waits for Stage 1 to finish successfully
+    needs: build
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -81,16 +79,12 @@ jobs:
   deploy_app:
     name: 'Stage 3: Deploy App'
     runs-on: ubuntu-latest
-    needs: deploy_infra # This ensures Stage 3 waits for the infrastructure to exist
+    needs: deploy_infra
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # This is a placeholder step. To deploy actual application code (like Node.js, Python, or .NET), 
-      # you will add the specific build and Azure Web App deploy actions here.
       - name: Simulate App Deployment
         run: |
-          echo "Infrastructure is ready!"
-          echo "Ready to zip and deploy application code to the new Azure App Service."
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve tfplan
+          echo "Infrastructure deployed successfully."
+          echo "Application deployment scripts (e.g., zip deploy to App Service) go here."
