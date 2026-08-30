@@ -84,7 +84,15 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Simulate App Deployment
-        run: |
-          echo "Infrastructure deployed successfully."
-          echo "Application deployment scripts (e.g., zip deploy to App Service) go here."
+      # Log in to Azure using the Service Principal credentials
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
+
+      # Deploy the contents of the 'src' folder directly to the App Service
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'app-enterprise-30278'
+          package: './src'
