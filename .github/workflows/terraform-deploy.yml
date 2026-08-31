@@ -53,6 +53,8 @@ jobs:
     name: 'Stage 2: Deploy Infra'
     runs-on: ubuntu-latest
     needs: build
+    outputs:
+      app_name: ${{ steps.output_app.outputs.APP_NAME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -73,7 +75,13 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
 
-# ==========================================
+      - name: Extract App Name Output
+        id: output_app
+        run: |
+          APP_NAME=$(terraform output -raw app_service_name)
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
+
+  # ==========================================
   # STAGE 3: APPLICATION DEPLOY
   # ==========================================
   deploy_app:
@@ -96,10 +104,10 @@ jobs:
           cd src
           zip -r ../app.zip .
 
-      # Deploy the zip package and wipe out old files automatically
+      # Deploy the zip package securely using the dynamic app name from Terraform output
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'app-enterprise-30278'
+          app-name: '${{ needs.deploy_infra.outputs.app_name }}'
           package: 'app.zip'
-          clean-target-folder: true
+          clean: true
