@@ -90,20 +90,16 @@ jobs:
         with:
           creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
 
-      # Clear out any default Azure placeholder files on the app server
-      - name: Clear Default Web Root
-        run: |
-          az webapp ssh --resource-group "rg-enterprise-app-prod" --name "app-enterprise-30278" --command "rm -rf /home/site/wwwroot/*" || true
-
       # Package the contents of the src folder into a zip
       - name: Package Application Files
         run: |
           cd src
           zip -r ../app.zip .
 
-      # Deploy the zip package directly to the Web App root
+      # Deploy the zip package and wipe out old files automatically
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'app-enterprise-30278'
           package: 'app.zip'
+          clean-target-folder: true
