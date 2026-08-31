@@ -30,7 +30,7 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: . # Change this if your .tf files are in a subfolder (e.g., Day2/enterprise-azure-paas)
+        working-directory: .
 
       - name: Terraform Format
         run: terraform fmt 
@@ -47,8 +47,6 @@ jobs:
     name: 'Stage 2: Deploy Infra'
     runs-on: ubuntu-latest
     needs: build
-    outputs:
-      app_name: ${{ steps.output_app.outputs.APP_NAME }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -60,18 +58,11 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
-        working-directory: . # Must match the build directory
+        working-directory: .
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: . # Must match the build directory
-
-      - name: Extract App Name Output
-        id: output_app
-        run: |
-          APP_NAME=$(terraform output -raw app_service_name)
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-        working-directory: . # Must match the build directory
+        working-directory: .
 
   # ==========================================
   # STAGE 3: APPLICATION DEPLOY
@@ -97,6 +88,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: '${{ needs.deploy_infra.outputs.app_name }}'
+          app-name: 'app-enterprise-30278'
           package: 'app.zip'
           clean: true
