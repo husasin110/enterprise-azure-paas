@@ -30,12 +30,15 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        working-directory: . # Change this if your .tf files are in a subfolder (e.g., Day2/enterprise-azure-paas)
 
       - name: Terraform Format
         run: terraform fmt 
+        working-directory: .
 
       - name: Terraform Validate
         run: terraform validate
+        working-directory: .
 
   # ==========================================
   # STAGE 2: INFRASTRUCTURE DEPLOY
@@ -57,15 +60,18 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        working-directory: . # Must match the build directory
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
+        working-directory: . # Must match the build directory
 
       - name: Extract App Name Output
         id: output_app
         run: |
           APP_NAME=$(terraform output -raw app_service_name)
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
+        working-directory: . # Must match the build directory
 
   # ==========================================
   # STAGE 3: APPLICATION DEPLOY
