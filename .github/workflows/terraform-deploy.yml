@@ -1,23 +1,8 @@
-name: 'Enterprise PaaS CI/CD'
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-env:
-  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-
-jobs:
-  # ==========================================
-  # STAGE 1: BUILD & PLAN
+# ==========================================
+  # STAGE 1: BUILD & VALIDATE
   # ==========================================
   build:
-    name: 'Stage 1: Build'
+    name: 'Stage 1: Validate'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -36,15 +21,6 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan
 
   # ==========================================
   # STAGE 2: INFRASTRUCTURE DEPLOY
@@ -67,47 +43,11 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply -auto-approve
 
       - name: Extract App Name Output
         id: output_app
         run: |
           APP_NAME=$(terraform output -raw app_service_name)
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-
-  # ==========================================
-  # STAGE 3: APPLICATION DEPLOY
-  # ==========================================
-  deploy_app:
-    name: 'Stage 3: Deploy App'
-    runs-on: ubuntu-latest
-    needs: deploy_infra
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      # Log in to Azure using the Service Principal credentials
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
-
-      # Package the contents of the src folder into a zip
-      - name: Package Application Files
-        run: |
-          cd src
-          zip -r ../app.zip .
-
-      # Deploy the zip package securely using the dynamic app name from Terraform output
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: '${{ needs.deploy_infra.outputs.app_name }}'
-          package: 'app.zip'
-          clean: true
