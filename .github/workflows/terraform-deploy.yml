@@ -85,9 +85,15 @@ jobs:
           cd src
           zip -r ../app.zip .
 
+      - name: Dynamically Find App Service Name
+        run: |
+          APP_NAME=$(az webapp list --query "[?starts_with(name, 'app-enterprise')].name | [0]" -o tsv)
+          echo "Found App Service: $APP_NAME"
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'app-enterprise-30278'
+          app-name: '${{ env.APP_NAME }}'
           package: 'app.zip'
           clean: true
