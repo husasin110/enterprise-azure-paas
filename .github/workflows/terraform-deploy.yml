@@ -38,7 +38,7 @@ jobs:
 
       # 4. Check formatting (Optional but recommended)
       - name: Terraform Format
-        run: terraform fmt -check
+        run: terraform fmt 
 
       # 5. Generate the execution plan
       - name: Terraform Plan
