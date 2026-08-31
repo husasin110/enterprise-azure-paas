@@ -73,7 +73,7 @@ jobs:
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
 
- # ==========================================
+# ==========================================
   # STAGE 3: APPLICATION DEPLOY
   # ==========================================
   deploy_app:
@@ -90,7 +90,12 @@ jobs:
         with:
           creds: '{"clientId":"${{ secrets.ARM_CLIENT_ID }}","clientSecret":"${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId":"${{ secrets.ARM_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.ARM_TENANT_ID }}"}'
 
-      # Create a zip package of just the contents inside src so Azure extracts them directly to wwwroot
+      # Clear out any default Azure placeholder files on the app server
+      - name: Clear Default Web Root
+        run: |
+          az webapp ssh --resource-group "rg-enterprise-app-prod" --name "app-enterprise-30278" --command "rm -rf /home/site/wwwroot/*" || true
+
+      # Package the contents of the src folder into a zip
       - name: Package Application Files
         run: |
           cd src
